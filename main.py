@@ -55,8 +55,24 @@ df_under_20 = pd.read_sql("""
 """, conn)
 
 
-df_customers = df_total_customers
+# NEW - Part 5 expects customers per office with n_customers column
+df_customers = pd.read_sql("""
+    SELECT COUNT(customers.customerNumber) AS n_customers, offices.officeCode, offices.city
+    FROM offices
+    LEFT JOIN employees ON offices.officeCode = employees.officeCode
+    LEFT JOIN customers ON employees.employeeNumber = customers.salesRepEmployeeNumber
+    GROUP BY offices.officeCode
+""", conn)
 
+
+df_total_customers = pd.read_sql("""
+    SELECT products.productName, products.productCode, COUNT(DISTINCT customerNumber) AS numpurchasers 
+    FROM products 
+    JOIN orderdetails ON products.productCode=orderdetails.productCode 
+    JOIN orders ON orderdetails.orderNumber=orders.orderNumber 
+    GROUP BY products.productCode 
+    ORDER BY numpurchasers DESC
+""", conn)
 
 df_under_20 = pd.read_sql("""
     SELECT DISTINCT employees.employeeNumber, employees.firstName, employees.lastName, offices.city, offices.officeCode
