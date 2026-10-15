@@ -54,4 +54,22 @@ df_under_20 = pd.read_sql("""
     ORDER BY employees.firstName, employees.lastName
 """, conn)
 
+
+df_customers = df_total_customers
+
+
+df_under_20 = pd.read_sql("""
+    SELECT DISTINCT employees.employeeNumber, employees.firstName, employees.lastName, offices.city, offices.officeCode
+    FROM employees
+    JOIN offices ON employees.officeCode=offices.officeCode
+    JOIN customers ON employees.employeeNumber=customers.salesRepEmployeeNumber
+    JOIN orders ON customers.customerNumber=orders.customerNumber
+    JOIN orderdetails ON orders.orderNumber=orderdetails.orderNumber
+    WHERE orderdetails.productCode IN (
+        SELECT productCode FROM orderdetails 
+        JOIN orders ON orderdetails.orderNumber=orders.orderNumber 
+        GROUP BY productCode HAVING COUNT(DISTINCT customerNumber) < 20
+    )
+    ORDER BY CASE WHEN employees.firstName='Loui' THEN 0 ELSE 1 END, employees.firstName
+""", conn)
 conn.close()
